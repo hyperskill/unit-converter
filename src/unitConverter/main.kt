@@ -1,5 +1,5 @@
 package unitConverter
 
 fun main(args: Array<String>) {
-    print("Hello world!")
+    print("Ok this is just a test")
 }

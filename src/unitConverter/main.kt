@@ -9,16 +9,53 @@ fun main(args: Array<String>) {
         if (exitFlag) {
             break
         }
-        if (value >= 0 && isPossibleToConvert(initialUnit!!, finalUnit!!)) {
+        if (isPossibleToConvert(initialUnit, finalUnit) == true && initialUnit != null && finalUnit != null) {
+            val result: Double = if (initialUnit.type == UnitTypes.TEMPERATURE) {
+                convertTemperature(value, initialUnit, finalUnit)
+            } else {
+                value * initialUnit.factor / finalUnit.factor
+            }
             val correctInitialUnit = if (value == 1.0) initialUnit.single else initialUnit.multiple
-            val result = value * initialUnit.factor / finalUnit.factor
-            val correctMetersUnit = if (result == 1.0) finalUnit.single else finalUnit.multiple
-            println("$value $correctInitialUnit is $result $correctMetersUnit")
+            val correctFinalUnit = if (result == 1.0) finalUnit.single else finalUnit.multiple
+            println("$value $correctInitialUnit is $result $correctFinalUnit")
+        } else {
+            var correctInitialUnit = "???"
+            var correctFinalUnit = "???"
+            if (initialUnit != null) {
+                correctInitialUnit = initialUnit.multiple
+            }
+            if (finalUnit != null) {
+                correctFinalUnit = finalUnit.multiple
+            }
+            println("Conversion from $correctInitialUnit to $correctFinalUnit is impossible")
         }
     }
 }
 
-private fun isPossibleToConvert(firstUnit: Unit, secondUnit: Unit): Boolean = firstUnit.type == secondUnit.type
+fun convertTemperature(value: Double, initialUnit: Unit, finalUnit: Unit): Double {
+    return when (initialUnit.acronym) {
+        "c" -> {
+            when (finalUnit.acronym) {
+                "f" -> value * 9 / 5 + 32
+                else -> value + 273.15
+            }
+        }
+        "f" -> {
+            when (finalUnit.acronym) {
+                "c" -> (value - 32) * 5 / 9
+                else -> (value + 459.67) * 5 / 9
+            }
+        }
+        else -> {
+            when (finalUnit.acronym) {
+                "c" -> value - 273.15
+                else -> value * 9 / 5 - 459.67
+            }
+        }
+    }
+}
+
+private fun isPossibleToConvert(firstUnit: Unit?, secondUnit: Unit?): Boolean? = firstUnit?.type == secondUnit?.type
 
 data class Result(val result: Double, val initUnit: Unit?, val finalUnit: Unit?, var exitFlag: Boolean)
 
@@ -31,12 +68,18 @@ private fun readData(unitsMap: Map<String, Unit>): Result {
         result.exitFlag = true
     } else {
         val value = next.toDouble()
-        val initialUnit = findUnit(scanner.next().toLowerCase(), unitsMap)
-        scanner.next()
-        val finalUnit = findUnit(scanner.next().toLowerCase(), unitsMap)
-        if (value >= 0 && initialUnit != null && finalUnit != null) {
-            result = Result(value, initialUnit, finalUnit, false)
+        var initialUnitName = scanner.next().toLowerCase()
+        if (initialUnitName.startsWith("degree")) {
+            initialUnitName += " " + scanner.next().toLowerCase()
         }
+        val initialUnit = findUnit(initialUnitName, unitsMap)
+        scanner.next()
+        var finalUnitName = scanner.next().toLowerCase()
+        if (finalUnitName.startsWith("degree")) {
+            finalUnitName += " " + scanner.next().toLowerCase()
+        }
+        val finalUnit = findUnit(finalUnitName, unitsMap)
+        result = Result(value, initialUnit, finalUnit, false)
     }
     return result
 }
@@ -56,6 +99,9 @@ private fun findUnit(string: String, unitsMap: Map<String, Unit>): Unit? {
         "mg", "milligram", "milligrams" -> unitsMap["mg"]
         "lb", "pound", "pounds" -> unitsMap["lb"]
         "oz", "ounce", "ounces" -> unitsMap["oz"]
+        "degree celsius", "degrees celsius", "dc", "c" -> unitsMap["c"]
+        "degree fahrenheit", "degrees fahrenheit", "df", "f" -> unitsMap["f"]
+        "kelvin", "kelvins", "k" -> unitsMap["k"]
         else -> null
     }
 }
@@ -74,6 +120,9 @@ private fun initUnitsMap(): Map<String, Unit> {
         "kg" to Unit(UnitTypes.WEIGHT, "kg", "kilogram", "kilograms", 1000.0),
         "mg" to Unit(UnitTypes.WEIGHT, "mg", "milligram", "milligrams", 0.001),
         "lb" to Unit(UnitTypes.WEIGHT, "lb", "pound", "pounds", 453.592),
-        "oz" to Unit(UnitTypes.WEIGHT, "oz", "ounce", "ounces", 28.3495)
+        "oz" to Unit(UnitTypes.WEIGHT, "oz", "ounce", "ounces", 28.3495),
+        "c" to Unit(UnitTypes.TEMPERATURE, "c", "degree Celsius", "degrees Celsius", 1.0),
+        "f" to Unit(UnitTypes.TEMPERATURE, "f", "degree Fahrenheit", "degrees Fahrenheit", 1.0),
+        "k" to Unit(UnitTypes.TEMPERATURE, "k", "Kelvin", "Kelvins", 1.0)
     )
 }

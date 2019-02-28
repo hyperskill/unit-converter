@@ -2,89 +2,133 @@ package unitConverter
 
 import java.util.*
 
-fun normalizeMeasure(measure:String): String = when(measure.toLowerCase()) {
-    "m", "meter", "meters" -> "meters"
-    "km", "kilometer", "kilometers" -> "kilometers"
-    "cm", "centimeter", "centimeters" -> "centimeters"
-    "mm", "millimeter", "millimeters" -> "millimeters"
-    "mi", "mile", "miles" -> "miles"
-    "yd", "yard", "yards" -> "yards"
-    "ft", "foot", "feet" -> "feet"
-    "in", "inch", "inches" -> "inches"
-    "g", "gram", "grams" -> "grams"
-    "kg", "kilogram", "kilograms" -> "kilograms"
-    "mg", "milligram", "milligrams" -> "milligrams"
-    "lb", "pound", "pounds" -> "pounds"
-    "oz", "ounce", "ounces" -> "ounces"
-
-    else -> error("can't normalize measure '$measure'")
+enum class Length (val factor: Double, val singular:String, val plural:String) {
+    MILLIMETER(0.001, "millimeter", "millimeters"),
+    CENTIMETER(0.01, "centimeter", "centimeters"),
+    INCH(0.0254, "inch", "inches"),
+    FOOT(0.3048, "foot", "feet"),
+    YARD(0.9144, "yard", "yards"),
+    METER(1.0, "meter", "meters"),
+    KILOMETER(1000.0, "kilometer", "kilometers"),
+    MILE(1609.35, "mile", "miles")
 }
 
-fun lengthFactor(measure:String): Double = when(measure) {
-    "meters" -> 1.0
-    "kilometers" -> 1000.0
-    "centimeters" -> 0.01
-    "millimeters" -> 0.001
-    "miles" -> 1609.35
-    "yards" -> 0.9144
-    "feet" -> 0.3048
-    "inches" -> 0.0254
-
-    else -> error("unknown length measure")
+enum class Weight(val factor: Double, val singular:String, val plural:String) {
+    GRAM(1.0, "gram", "grams"),
+    KILOGRAM(1000.0, "kilogram", "kilograms"),
+    MILLIGRAM(0.001, "milligram", "milligrams"),
+    POUND(453.592, "pound", "pounds"),
+    OUNCE(28.3495, "ounce", "ounces")
 }
 
-fun weightFactor(measure:String): Double = when(measure) {
-    "grams" -> 1.0
-    "kilograms" -> 1000.0
-    "milligrams" -> 0.001
-    "pounds" -> 453.592
-    "ounces" -> 28.3495
-
-    else -> error("unknown weight measure")
+enum class Temperature(val singular:String, val plural:String) {
+    CELSIUS("degree Celsius", "degrees Celsius"),
+    FAHRENHEIT("degree Fahrenheit", "degrees Fahrenheit"),
+    KELVIN("Kelvin", "Kelvins")
 }
 
-fun lengthConverter(fromMeasure:String, toMeasure:String, amount:Double = 1.0): Double {
-    val factorFrom = lengthFactor(fromMeasure)
-    val factorTo = lengthFactor(toMeasure)
+fun normalizeMeasure(measure: String): String = when (measure.toLowerCase()) {
+    "m", "meter", "meters" -> Length.METER.name
+    "km", "kilometer", "kilometers" -> Length.KILOMETER.name
+    "cm", "centimeter", "centimeters" -> Length.CENTIMETER.name
+    "mm", "millimeter", "millimeters" -> Length.MILLIMETER.name
+    "mi", "mile", "miles" -> Length.MILE.name
+    "yd", "yard", "yards" -> Length.YARD.name
+    "ft", "foot", "feet" -> Length.FOOT.name
+    "in", "inch", "inches" -> Length.INCH.name
+    "g", "gram", "grams" -> Weight.GRAM.name
+    "kg", "kilogram", "kilograms" -> Weight.KILOGRAM.name
+    "mg", "milligram", "milligrams" -> Weight.MILLIGRAM.name
+    "lb", "pound", "pounds" -> Weight.POUND.name
+    "oz", "ounce", "ounces" -> Weight.OUNCE.name
+    "degree celsius", "degrees celsius", "dc", "c" -> Temperature.CELSIUS.name
+    "degree fahrenheit", "degrees fahrenheit", "df", "f" -> Temperature.FAHRENHEIT.name
+    "kelvin", "kelvins", "k" -> Temperature.KELVIN.name
 
-    return amount * factorFrom / factorTo
+    else -> "???"
 }
 
-fun weightConverter(fromMeasure:String, toMeasure:String, amount:Double = 1.0): Double {
-    val factorFrom = weightFactor(fromMeasure)
-    val factorTo = weightFactor(toMeasure)
-
-    return amount * factorFrom / factorTo
+fun lengthConverter(fromMeasure: Length, toMeasure: Length, amount: Double = 1.0): Double {
+    return amount * fromMeasure.factor / toMeasure.factor
 }
 
-fun isWeightMeasure(measure:String): Boolean = when(measure) {
-    "grams",
-    "kilograms",
-    "milligrams",
-    "pounds",
-    "ounces" -> true
-
-    else -> false
+fun weightConverter(fromMeasure: Weight, toMeasure: Weight, amount: Double = 1.0): Double {
+    return amount * fromMeasure.factor / toMeasure.factor
 }
 
-fun isLengthMeasure(measure:String): Boolean = when(measure) {
-    "meters",
-    "kilometers",
-    "centimeters",
-    "millimeters",
-    "miles",
-    "yards",
-    "feet",
-    "inches" -> true
+fun temperatureConverter(fromMeasure: Temperature, toMeasure: Temperature, amount: Double = 1.0): Double {
+    return when {
+        fromMeasure == Temperature.CELSIUS && toMeasure == Temperature.KELVIN -> amount + 273.15
+        fromMeasure == Temperature.CELSIUS && toMeasure == Temperature.FAHRENHEIT -> amount * 9 / 5 + 32
+        fromMeasure == Temperature.KELVIN && toMeasure == Temperature.CELSIUS -> amount - 273.15
+        fromMeasure == Temperature.KELVIN && toMeasure == Temperature.FAHRENHEIT -> amount * 9 / 5 - 459.67
+        fromMeasure == Temperature.FAHRENHEIT && toMeasure == Temperature.CELSIUS -> (amount - 32) * 5 / 9
+        fromMeasure == Temperature.FAHRENHEIT && toMeasure == Temperature.KELVIN -> (amount + 459.67) * 5 / 9
 
-    else -> false
+        else -> amount
+    }
 }
 
-fun calculate(fromMeasure:String, toMeasure:String, amount:Double): Double = when {
-    isWeightMeasure(fromMeasure) -> weightConverter(fromMeasure, toMeasure, amount)
-    isLengthMeasure(fromMeasure) -> lengthConverter(fromMeasure, toMeasure, amount)
+fun isWeightMeasure(normalizedMeasure: String): Boolean {
+    return Weight.values().any { it.name == normalizedMeasure }
+}
 
-    else -> error("Unknown measure type")
+fun isLengthMeasure(normalizedMeasure: String): Boolean {
+    return Length.values().any { it.name == normalizedMeasure }
+}
+
+fun isTemperatureMeasure(normalizedMeasure: String): Boolean {
+    return Temperature.values().any { it.name == normalizedMeasure }
+}
+
+fun getLabel(amount: Double, singular:String, plural: String) = when(amount == 1.0) {
+    true -> singular
+    false -> plural
+}
+
+fun calculate(fromMeasure: String, toMeasure: String, amount: Double) {
+    val normalizedFrom = normalizeMeasure(fromMeasure)
+    val normalizedTo = normalizeMeasure(toMeasure)
+    var conversion = 0.0
+    var amountLabel = ""
+    var conversionLabel = ""
+
+    when {
+        isWeightMeasure(normalizedFrom) && isWeightMeasure(normalizedTo) -> {
+            val fromMeasureEnum = Weight.valueOf(normalizedFrom)
+            val toMeasureEnum = Weight.valueOf(normalizedTo)
+
+            conversion = weightConverter(fromMeasureEnum, toMeasureEnum, amount)
+            amountLabel = getLabel(amount, fromMeasureEnum.singular, fromMeasureEnum.plural)
+            conversionLabel = getLabel(conversion, toMeasureEnum.singular, toMeasureEnum.plural)
+        }
+
+        isLengthMeasure(normalizedFrom) && isLengthMeasure(normalizedTo) -> {
+            val fromMeasureEnum = Length.valueOf(normalizedFrom)
+            val toMeasureEnum = Length.valueOf(normalizedTo)
+
+            conversion = lengthConverter(fromMeasureEnum, toMeasureEnum, amount)
+            amountLabel = getLabel(amount, fromMeasureEnum.singular, fromMeasureEnum.plural)
+            conversionLabel = getLabel(conversion, toMeasureEnum.singular, toMeasureEnum.plural)
+        }
+
+        isTemperatureMeasure(normalizedFrom) && isTemperatureMeasure(normalizedTo) -> {
+            val fromMeasureEnum = Temperature.valueOf(normalizedFrom)
+            val toMeasureEnum = Temperature.valueOf(normalizedTo)
+
+            conversion = temperatureConverter(fromMeasureEnum, toMeasureEnum, amount)
+            amountLabel = getLabel(amount, fromMeasureEnum.singular, fromMeasureEnum.plural)
+            conversionLabel = getLabel(conversion, toMeasureEnum.singular, toMeasureEnum.plural)
+        }
+
+        else -> {
+            println("Conversion from ${normalizedFrom.toLowerCase()} to ${normalizedTo.toLowerCase()} is impossible")
+
+            return
+        }
+    }
+
+    println("$amount $amountLabel is $conversion $conversionLabel")
 }
 
 fun main(args: Array<String>) {
@@ -102,11 +146,20 @@ fun main(args: Array<String>) {
         }
 
         val amount = scanner.nextDouble()
-        val fromMeasure = normalizeMeasure(scanner.next())
-        scanner.next()
-        val toMeasure = normalizeMeasure(scanner.next())
-        val result = calculate(fromMeasure, toMeasure, amount)
+        var fromMeasure = scanner.next()
 
-        println("$amount $fromMeasure is $result $toMeasure")
+        while (scanner.hasNext()) {
+            val part = scanner.next()
+
+            if (part.toLowerCase() in arrayOf("in", "to")) {
+                break;
+            }
+
+            fromMeasure += " $part"
+        }
+
+        val toMeasure = scanner.nextLine().trim()
+
+        calculate(fromMeasure, toMeasure, amount)
     }
 }

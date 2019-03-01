@@ -81,54 +81,70 @@ fun isTemperatureMeasure(normalizedMeasure: String): Boolean {
     return Temperature.values().any { it.name == normalizedMeasure }
 }
 
-fun getLabel(amount: Double, singular:String, plural: String) = when(amount == 1.0) {
-    true -> singular
-    false -> plural
+fun getLabel(normalizedMeasure: String, amount:Double = 1.0):String = when {
+    isWeightMeasure(normalizedMeasure) -> getLabel(Weight.valueOf(normalizedMeasure), amount)
+    isLengthMeasure(normalizedMeasure) -> getLabel(Length.valueOf(normalizedMeasure), amount)
+    isTemperatureMeasure(normalizedMeasure) -> getLabel(Temperature.valueOf(normalizedMeasure), amount)
+
+    else -> "???"
+}
+
+fun getLabel(measure: Weight, amount: Double): String {
+    if (amount == 1.0) {
+        return measure.singular
+    }
+
+    return measure.plural
+}
+
+fun getLabel(measure: Length, amount: Double): String {
+    if (amount == 1.0) {
+        return measure.singular
+    }
+
+    return measure.plural
+}
+
+fun getLabel(measure: Temperature, amount: Double): String {
+    if (amount == 1.0) {
+        return measure.singular
+    }
+
+    return measure.plural
 }
 
 fun calculate(fromMeasure: String, toMeasure: String, amount: Double) {
     val normalizedFrom = normalizeMeasure(fromMeasure)
     val normalizedTo = normalizeMeasure(toMeasure)
-    var conversion = 0.0
-    var amountLabel = ""
-    var conversionLabel = ""
+    val conversion:Double
 
     when {
         isWeightMeasure(normalizedFrom) && isWeightMeasure(normalizedTo) -> {
-            val fromMeasureEnum = Weight.valueOf(normalizedFrom)
-            val toMeasureEnum = Weight.valueOf(normalizedTo)
-
-            conversion = weightConverter(fromMeasureEnum, toMeasureEnum, amount)
-            amountLabel = getLabel(amount, fromMeasureEnum.singular, fromMeasureEnum.plural)
-            conversionLabel = getLabel(conversion, toMeasureEnum.singular, toMeasureEnum.plural)
+            conversion = weightConverter(Weight.valueOf(normalizedFrom), Weight.valueOf(normalizedTo), amount)
         }
 
         isLengthMeasure(normalizedFrom) && isLengthMeasure(normalizedTo) -> {
-            val fromMeasureEnum = Length.valueOf(normalizedFrom)
-            val toMeasureEnum = Length.valueOf(normalizedTo)
-
-            conversion = lengthConverter(fromMeasureEnum, toMeasureEnum, amount)
-            amountLabel = getLabel(amount, fromMeasureEnum.singular, fromMeasureEnum.plural)
-            conversionLabel = getLabel(conversion, toMeasureEnum.singular, toMeasureEnum.plural)
+            conversion = lengthConverter(Length.valueOf(normalizedFrom), Length.valueOf(normalizedTo), amount)
         }
 
         isTemperatureMeasure(normalizedFrom) && isTemperatureMeasure(normalizedTo) -> {
-            val fromMeasureEnum = Temperature.valueOf(normalizedFrom)
-            val toMeasureEnum = Temperature.valueOf(normalizedTo)
-
-            conversion = temperatureConverter(fromMeasureEnum, toMeasureEnum, amount)
-            amountLabel = getLabel(amount, fromMeasureEnum.singular, fromMeasureEnum.plural)
-            conversionLabel = getLabel(conversion, toMeasureEnum.singular, toMeasureEnum.plural)
+            conversion = temperatureConverter(Temperature.valueOf(normalizedFrom), Temperature.valueOf(normalizedTo), amount)
         }
 
         else -> {
-            println("Conversion from ${normalizedFrom.toLowerCase()} to ${normalizedTo.toLowerCase()} is impossible")
+            val fromLabel = getLabel(normalizedFrom);
+            val toLabel = when(fromLabel == "???") {
+                true -> getLabel(normalizedTo, 2.0)
+                false -> getLabel(normalizedTo)
+            }
+
+            println("Conversion from ${fromLabel} to ${toLabel} is impossible")
 
             return
         }
     }
 
-    println("$amount $amountLabel is $conversion $conversionLabel")
+    println("$amount ${getLabel(normalizedFrom, amount)} is $conversion ${getLabel(normalizedTo, conversion)}")
 }
 
 fun main(args: Array<String>) {

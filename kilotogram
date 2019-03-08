@@ -1,0 +1,10 @@
+import java.util.Scanner
+
+fun main(args: Array<String>) {
+    print("Enter a number of kilograms: ")
+    val scanner = Scanner(System.`in`)
+    val n=scanner.nextInt()
+    val n1=n*1000;
+    print("$n kilograms is $n1 grams")
+
+}
